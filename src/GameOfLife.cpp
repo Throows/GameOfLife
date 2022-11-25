@@ -1,30 +1,40 @@
 #include "GameOfLife.h"
+#include <stdlib.h>
 
-GameOfLife::GameOfLife()
+GameOfLife::GameOfLife(uint caseNB, std::shared_ptr<Logger> logger) :
+	m_caseNB(caseNB),
+	m_seed(0),
+	logger(std::move(logger))
 {
-	this->square = sf::CircleShape(15.f, 4);
-	this->square.setRotation(45);
-
-	this->m_grid[10][10] = 1;
-	this->m_grid[10][11] = 1;
-	this->m_grid[10][12] = 1;
-
-	this->m_grid[30][30] = 1;
-	this->m_grid[32][30] = 1;
-	this->m_grid[31][29] = 1;
-	this->m_grid[31][31] = 1;
-	
-
-	this->createPattern(23, 43);
-	this->createPattern(24, 46);
-	this->createPattern(10, 30);
-	this->createPattern(12, 33);
-	
-
 }
 
 GameOfLife::~GameOfLife()
 {
+}
+
+void GameOfLife::setup()
+{
+	std::string seedS;
+	std::getline(std::cin, seedS);
+	this->m_seed = atoi(seedS.c_str());
+	if (this->m_seed == 0)
+		this->m_seed = rand();
+
+	logger->logger.info("New Seed Found %d", this->m_seed);
+}
+
+void GameOfLife::setupScreen()
+{
+	this->square = sf::CircleShape(15.f, 4);
+	this->square.setRotation(45);
+	this->grid.clear();
+
+	for (int i = 1; i <= this->m_caseNB; i++)
+	{
+		CaseState gridCase = (this->m_seed / i) % 2 ? CaseState::ALIVE : CaseState::DEAD;
+		this->grid.push_back(gridCase);
+	}
+
 }
 
 void GameOfLife::Update(sf::RenderWindow &window, sf::Clock &clock)
@@ -33,22 +43,46 @@ void GameOfLife::Update(sf::RenderWindow &window, sf::Clock &clock)
 	sf::Time ticks = clock.getElapsedTime();
 	if(ticks.asMilliseconds() >= 500)
 		UpdateGrid(clock);
+	else if (!needValidate)
+	{
+		validateUpdate();
+		needValidate = false;
+	}
 
+}
+
+void GameOfLife::validateUpdate()
+{
+	for(auto caseGrid : this->m_grid)
+	{
+		switch (caseGrid)
+		{
+		case CaseState::D_TO_A:
+			caseGrid = CaseState::ALIVE;
+			break;
+		case CaseState::A_TO_D:
+			caseGrid = CaseState::DEAD;
+			break;
+		}
+	}
 }
 
 void GameOfLife::Render(sf::RenderWindow &window)
 {
 	window.clear(sf::Color::Black);
 
-	for (int x = 0; x < 60; x++)
+	for (int x = 1; x <= 60; x++)
 	{
-		for (int y = 0; y < 60; y++)
+		for (int y = 1; y <= 60; y++)
 		{
-			switch (this->m_grid[x][y])
+			switch (this->m_grid.at(x*y))
 			{
-			case 1:
+			case CaseState::ALIVE:
+			case CaseState::D_TO_A:
 				this->square.setFillColor(sf::Color::White);
 				break;
+			case CaseState::DEAD:
+			case CaseState::A_TO_D:
 			default:
 				this->square.setFillColor(sf::Color::Black);
 				break;
@@ -57,51 +91,24 @@ void GameOfLife::Render(sf::RenderWindow &window)
 			window.draw(this->square);
 		}
 	}
-
 	window.display();
 }
 
 void GameOfLife::UpdateGrid(sf::Clock &clock)
 {
-
-	int newGrid[60][60];
-	memcpy(newGrid, this->m_grid, 60*60*sizeof(int));
-
-	for (int x = 0; x < 60; x++)
+	for (int y = 1; y <= 60; y++)
 	{
-		for (int y = 0; y < 60; y++)
+		for (int x = 0; x < 60; x++)
 		{
-			int aliveGridSum = 0;
-			if (( x > 1 && x < 59 ) && (y > 1 && y < 59)) {
+			if (this->m_grid.at(x * y) == CaseState)
+			{
 				
-				aliveGridSum += this->m_grid[x][y - 1];
-				aliveGridSum += this->m_grid[x][y + 1];
-
-				aliveGridSum += this->m_grid[x - 1][y - 1];
-				aliveGridSum += this->m_grid[x - 1][y + 1];
-				aliveGridSum += this->m_grid[x - 1][y];
-
-				aliveGridSum += this->m_grid[x + 1][y - 1];
-				aliveGridSum += this->m_grid[x + 1][y + 1];
-				aliveGridSum += this->m_grid[x + 1][y];
-				
-			}
-
-			if(this->m_grid[x][y] == 0 && aliveGridSum == 3){
-				newGrid[x][y] = 1;
-			}
-			if (this->m_grid[x][y] == 1) {
-				if(aliveGridSum != 3 && aliveGridSum != 2) newGrid[x][y] = 0;
 			}
 		}
 	}
 
-	//std::cout << "Grid updated ! " << std::endl;
-
-	memcpy(this->m_grid, newGrid, 60 * 60 * sizeof(int));
-
 	clock.restart();
-
+	needValidate = true;
 }
 
 void GameOfLife::UpdateEvents(sf::RenderWindow &window)
@@ -114,15 +121,6 @@ void GameOfLife::UpdateEvents(sf::RenderWindow &window)
 			window.close();
 		}
 	}
-}
-
-void GameOfLife::createPattern(int xCord, int yCoord)
-{
-	this->m_grid[xCord][yCoord] = 1;
-	this->m_grid[xCord+1][yCoord+1] = 1;
-	this->m_grid[xCord+1][yCoord+2] = 1;
-	this->m_grid[xCord][yCoord+2] = 1;
-	this->m_grid[xCord-1][yCoord+2] = 1;
 }
 
 
