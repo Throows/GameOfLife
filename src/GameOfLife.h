@@ -16,7 +16,7 @@ enum CaseState : uint8_t
 class GameOfLife
 {
 public:
-	GameOfLife(uint caseNB, std::shared_ptr<Logger> logger);
+	GameOfLife(uint caseNB, std::shared_ptr<GOL::Logger> logger);
 	~GameOfLife();
 
 	void setup();
@@ -32,9 +32,9 @@ public:
 private:
 	uint m_caseNB;
 	uint m_seed;
-	std::vector<CaseState> grid;
+	std::vector<CaseState> m_grid;
+	std::shared_ptr<GOL::Logger> logger;
 	sf::CircleShape square;
-	std::shared_ptr<Logger> logger;
 	bool needValidate = true;
 };
 

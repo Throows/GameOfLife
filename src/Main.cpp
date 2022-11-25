@@ -1,17 +1,18 @@
 #include "GameOfLife.h"
 #include <SFML/Main.hpp>
 #include "Logger.h"
+#include <memory>
 
-int main() {
-
-	auto logger = std::make_shared<Logger>();
+int main() 
+{
+	std::shared_ptr<GOL::Logger> logger = std::make_shared<GOL::Logger>();
+	sf::RenderWindow window(sf::VideoMode(1000, 1000), "Game Of Life", sf::Style::Default);
 	logger->setup("log.txt", "GameOfLife");
-	spdlog::set_pattern("[%T] [%n] [%^---%L---%$] %v");
-	sf::RenderWindow window(sf::VideoMode(900, 900), "Game Of Life", sf::Style::Default);
 	GameOfLife gameOfLife(3600, logger);
 	sf::Clock clock;
 
 	gameOfLife.setup();
+	gameOfLife.setupScreen();
 
 	while (window.isOpen())
 	{

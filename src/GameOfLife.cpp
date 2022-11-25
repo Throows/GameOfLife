@@ -1,7 +1,11 @@
 #include "GameOfLife.h"
 #include <stdlib.h>
+#include <iostream>
+#include <random>
+#include <cstdint>
 
-GameOfLife::GameOfLife(uint caseNB, std::shared_ptr<Logger> logger) :
+
+GameOfLife::GameOfLife(uint caseNB, std::shared_ptr<GOL::Logger> logger) :
 	m_caseNB(caseNB),
 	m_seed(0),
 	logger(std::move(logger))
@@ -14,36 +18,32 @@ GameOfLife::~GameOfLife()
 
 void GameOfLife::setup()
 {
-	std::string seedS;
-	std::getline(std::cin, seedS);
-	this->m_seed = atoi(seedS.c_str());
-	if (this->m_seed == 0)
-		this->m_seed = rand();
-
-	logger->logger.info("New Seed Found %d", this->m_seed);
+	std::random_device dev;
+	std::mt19937 generator(dev());
+	std::uniform_int_distribution<uint64_t> distr(0, UINT64_MAX);
+	this->m_seed = distr(generator);
+	logger->logger->info("New Seed Found {}", this->m_seed);
 }
 
 void GameOfLife::setupScreen()
 {
 	this->square = sf::CircleShape(15.f, 4);
 	this->square.setRotation(45);
-	this->grid.clear();
 
 	for (int i = 1; i <= this->m_caseNB; i++)
 	{
 		CaseState gridCase = (this->m_seed / i) % 2 ? CaseState::ALIVE : CaseState::DEAD;
-		this->grid.push_back(gridCase);
+		this->m_grid.push_back(gridCase);
 	}
-
 }
 
 void GameOfLife::Update(sf::RenderWindow &window, sf::Clock &clock)
 {
 	UpdateEvents(window);
 	sf::Time ticks = clock.getElapsedTime();
-	if(ticks.asMilliseconds() >= 500)
+	if(ticks.asMilliseconds() >= 100)
 		UpdateGrid(clock);
-	else if (!needValidate)
+	if (needValidate)
 	{
 		validateUpdate();
 		needValidate = false;
@@ -53,17 +53,12 @@ void GameOfLife::Update(sf::RenderWindow &window, sf::Clock &clock)
 
 void GameOfLife::validateUpdate()
 {
-	for(auto caseGrid : this->m_grid)
+	for(auto& cell : this->m_grid)
 	{
-		switch (caseGrid)
-		{
-		case CaseState::D_TO_A:
-			caseGrid = CaseState::ALIVE;
-			break;
-		case CaseState::A_TO_D:
-			caseGrid = CaseState::DEAD;
-			break;
-		}
+		if (cell == CaseState::D_TO_A)
+			cell = CaseState::ALIVE;
+		else if (cell == CaseState::A_TO_D)
+			cell = CaseState::DEAD;
 	}
 }
 
@@ -71,42 +66,49 @@ void GameOfLife::Render(sf::RenderWindow &window)
 {
 	window.clear(sf::Color::Black);
 
-	for (int x = 1; x <= 60; x++)
+	int ind = 0;
+	for (auto &cell : this->m_grid)
 	{
-		for (int y = 1; y <= 60; y++)
-		{
-			switch (this->m_grid.at(x*y))
-			{
-			case CaseState::ALIVE:
-			case CaseState::D_TO_A:
-				this->square.setFillColor(sf::Color::White);
-				break;
-			case CaseState::DEAD:
-			case CaseState::A_TO_D:
-			default:
-				this->square.setFillColor(sf::Color::Black);
-				break;
-			}
-			this->square.setPosition(sf::Vector2f(x*15, y*15));
-			window.draw(this->square);
-		}
+		if (cell == CaseState::D_TO_A || cell == CaseState::ALIVE)
+			this->square.setFillColor(sf::Color::White);
+		else if (cell == CaseState::D_TO_A || cell == CaseState::DEAD)
+			this->square.setFillColor(sf::Color::Black);
+
+		this->square.setPosition(sf::Vector2f(((ind % 60)+1) * 15, (ind/60) * 15));
+		window.draw(this->square);
+		ind++;
 	}
 	window.display();
 }
 
+const int8_t cellRelativePos[] = { -1, -60-1, -60, -60+1, 1, 60+1, 60, 60-1 };
+
 void GameOfLife::UpdateGrid(sf::Clock &clock)
 {
-	for (int y = 1; y <= 60; y++)
+	for(int pos = 0; pos < this->m_grid.size(); pos++)
 	{
-		for (int x = 0; x < 60; x++)
+		uint8_t aliveCells = 0;
+		for(uint8_t i = 0; i < 8; i++)
 		{
-			if (this->m_grid.at(x * y) == CaseState)
+			int cellPos = pos + cellRelativePos[i];
+			if (cellPos < m_caseNB && cellPos >= 0)
 			{
-				
+				if (this->m_grid.at(cellPos) == CaseState::ALIVE || this->m_grid.at(cellPos) == CaseState::A_TO_D)
+					aliveCells++;
 			}
 		}
-	}
 
+		if(this->m_grid.at(pos) == CaseState::ALIVE)
+		{
+			if (aliveCells < 2 || aliveCells > 3)  // Under/Over Population
+				this->m_grid.at(pos) = CaseState::A_TO_D;
+		}
+		else if (this->m_grid.at(pos) == CaseState::DEAD)
+		{
+			if (aliveCells == 3)
+				this->m_grid.at(pos) = CaseState::D_TO_A;
+		}
+	}
 	clock.restart();
 	needValidate = true;
 }
