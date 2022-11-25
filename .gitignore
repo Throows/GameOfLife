@@ -1,5 +1,6 @@
 build/**
 .xmake/**
+.vscode/**
 vsxmake2019/**
 .DS_STORE
 **.code-workspace
