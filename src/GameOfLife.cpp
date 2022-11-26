@@ -32,6 +32,7 @@ void GameOfLife::setup()
 	std::uniform_int_distribution<uint64_t> distr(0, UINT64_MAX);
 	this->m_seed = distr(generator);
 	logger->logger->info("New Seed Found {}", this->m_seed);
+	srand(this->m_seed);
 }
 
 void GameOfLife::setupScreen()
@@ -40,9 +41,23 @@ void GameOfLife::setupScreen()
 
 	for (int i = 1; i <= (m_length * m_width); i++)
 	{
-		CaseState gridCase = (this->m_seed / i) % 2 ? CaseState::ALIVE : CaseState::DEAD;
+		CaseState gridCase = !(std::rand() % 3) ? CaseState::ALIVE : CaseState::DEAD;
 		this->m_grid.push_back(gridCase);
 	}
+	logger->logger->trace("================ Grid L: {}, W: {} ================", this->m_length, this->m_width);
+	for (int i = 0; i < (m_length * m_width); i+=m_width)
+	{
+		std::string buffer = "{";
+		for (int x = 0; x < m_length; x++)
+		{
+			buffer += stateToStr(this->m_grid.at(i + x));
+			if(m_length-1 != x)
+				buffer += ",";
+		}
+		buffer += "}";
+		logger->logger->trace("{}", buffer.c_str());
+	}
+	logger->logger->trace("================================================");
 }
 
 void GameOfLife::Update(sf::RenderWindow &window, sf::Clock &clock)
@@ -131,4 +146,10 @@ void GameOfLife::UpdateEvents(sf::RenderWindow &window)
 	}
 }
 
-
+std::string stateToStr(CaseState state)
+{
+	std::string stateStr = "0";
+	if(state == CaseState::ALIVE || state == CaseState::D_TO_A)
+		stateStr = "1";
+	return stateStr;
+}

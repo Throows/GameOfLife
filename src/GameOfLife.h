@@ -13,6 +13,8 @@ enum CaseState : uint8_t
 	A_TO_D = 3
 };
 
+std::string stateToStr(CaseState state);
+
 class GameOfLife
 {
 public:

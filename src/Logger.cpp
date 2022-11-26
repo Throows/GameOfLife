@@ -23,9 +23,11 @@ namespace GOL
             auto fLogger = std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/" + fileName, true);
             this->m_fileLogger = std::move(fLogger);
             this->m_fileLogger->set_level(spdlog::level::trace);
+            this->m_fileLogger->set_pattern("[GameOfLife] [%^%l%$] %v");
 
             spdlog::sinks_init_list sinkLists = { this->m_consoleLogger, this->m_fileLogger };
             this->logger = std::make_shared<spdlog::logger>(logName, sinkLists.begin(), sinkLists.end());
+            this->logger->set_level(spdlog::level::trace);
         }
         catch (const spdlog::spdlog_ex& ex) 
         {
