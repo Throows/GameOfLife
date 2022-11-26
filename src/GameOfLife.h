@@ -16,7 +16,7 @@ enum CaseState : uint8_t
 class GameOfLife
 {
 public:
-	GameOfLife(uint caseNB, std::shared_ptr<GOL::Logger> logger);
+	GameOfLife(uint length, uint width, std::shared_ptr<GOL::Logger> logger);
 	~GameOfLife();
 
 	void setup();
@@ -30,11 +30,13 @@ public:
 	void UpdateEvents(sf::RenderWindow &window);
 
 private:
-	uint m_caseNB;
+	uint m_length;
+	uint m_width;
 	uint m_seed;
 	std::vector<CaseState> m_grid;
 	std::shared_ptr<GOL::Logger> logger;
-	sf::CircleShape square;
+	sf::RectangleShape square;
 	bool needValidate = true;
+	const int *cellRelativePos;
 };
 

@@ -6,9 +6,9 @@
 int main() 
 {
 	std::shared_ptr<GOL::Logger> logger = std::make_shared<GOL::Logger>();
-	sf::RenderWindow window(sf::VideoMode(1000, 1000), "Game Of Life", sf::Style::Default);
+	sf::RenderWindow window(sf::VideoMode(1500, 1500), "Game Of Life", sf::Style::Default);
 	logger->setup("log.txt", "GameOfLife");
-	GameOfLife gameOfLife(3600, logger);
+	GameOfLife gameOfLife(100, 100, logger);
 	sf::Clock clock;
 
 	gameOfLife.setup();
@@ -19,7 +19,5 @@ int main()
 		gameOfLife.Update(window, clock);
 		gameOfLife.Render(window);
 	}
-
 	return 0;
-
 }

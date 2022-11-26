@@ -5,11 +5,20 @@
 #include <cstdint>
 
 
-GameOfLife::GameOfLife(uint caseNB, std::shared_ptr<GOL::Logger> logger) :
-	m_caseNB(caseNB),
+GameOfLife::GameOfLife(uint length, uint width, std::shared_ptr<GOL::Logger> logger) :
+	m_length(length),
+	m_width(width),
 	m_seed(0),
-	logger(std::move(logger))
+	logger(std::move(logger)) 
 {
+	int len = static_cast<int>(m_length);
+	this->cellRelativePos = new int[8]
+	{ 
+		-1, 
+		-len - 1, -len, -len + 1, 
+		 1, 
+		 len - 1,  len,  len + 1
+	};
 }
 
 GameOfLife::~GameOfLife()
@@ -27,10 +36,9 @@ void GameOfLife::setup()
 
 void GameOfLife::setupScreen()
 {
-	this->square = sf::CircleShape(15.f, 4);
-	this->square.setRotation(45);
+	this->square = sf::RectangleShape(sf::Vector2f(15.f, 15.f));
 
-	for (int i = 1; i <= this->m_caseNB; i++)
+	for (int i = 1; i <= (m_length * m_width); i++)
 	{
 		CaseState gridCase = (this->m_seed / i) % 2 ? CaseState::ALIVE : CaseState::DEAD;
 		this->m_grid.push_back(gridCase);
@@ -74,14 +82,12 @@ void GameOfLife::Render(sf::RenderWindow &window)
 		else if (cell == CaseState::D_TO_A || cell == CaseState::DEAD)
 			this->square.setFillColor(sf::Color::Black);
 
-		this->square.setPosition(sf::Vector2f(((ind % 60)+1) * 15, (ind/60) * 15));
+		this->square.setPosition(sf::Vector2f(((ind % m_length)+1) * 15, (ind/m_width) * 15));
 		window.draw(this->square);
 		ind++;
 	}
 	window.display();
 }
-
-const int8_t cellRelativePos[] = { -1, -60-1, -60, -60+1, 1, 60+1, 60, 60-1 };
 
 void GameOfLife::UpdateGrid(sf::Clock &clock)
 {
@@ -90,8 +96,8 @@ void GameOfLife::UpdateGrid(sf::Clock &clock)
 		uint8_t aliveCells = 0;
 		for(uint8_t i = 0; i < 8; i++)
 		{
-			int cellPos = pos + cellRelativePos[i];
-			if (cellPos < m_caseNB && cellPos >= 0)
+			int cellPos = pos + this->cellRelativePos[i];
+			if (cellPos < (m_length * m_width) && cellPos >= 0)
 			{
 				if (this->m_grid.at(cellPos) == CaseState::ALIVE || this->m_grid.at(cellPos) == CaseState::A_TO_D)
 					aliveCells++;
