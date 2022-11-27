@@ -25,7 +25,7 @@ public:
 	void setupScreen();
 
 	void Update(sf::RenderWindow &window, sf::Clock &clock);
-	void validateUpdate();
+	void resetGridTransition();
 	void Render(sf::RenderWindow &window);
 
 	void UpdateGrid(sf::Clock &clock);
@@ -39,6 +39,9 @@ private:
 	std::shared_ptr<GOL::Logger> logger;
 	sf::RectangleShape square;
 	bool needValidate = true;
+	bool generationEnded = false;
 	const int *cellRelativePos;
+	std::array<int, 4> generationStats; // 0: DEAD, 1: ALIVE, 2: DA, 3: AD 
+	int roundNumber = 0;
 };
 

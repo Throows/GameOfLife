@@ -17,8 +17,6 @@ namespace GOL
 
         void setup(std::string fileName, std::string logName);
 
-        std::shared_ptr<spdlog::logger> logger = spdlog::default_logger();
-
     private:
         ConsoleLogger m_consoleLogger;
         FileLogger m_fileLogger;
